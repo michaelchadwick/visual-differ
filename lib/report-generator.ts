@@ -1,10 +1,16 @@
-import { writeFileSync } from 'fs';
-import { join, basename } from 'path';
+import { readFileSync, writeFileSync } from 'fs';
+import { join, basename, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import Handlebars from 'handlebars';
 import type { ComparisonResult } from './image-comparer.js';
 import type { ScannedFile } from './file-scanner.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const TEMPLATES_DIR = join(__dirname, '../templates');
+
 /**
- * Generates a Markdown report with visual diff results
+ * Generates an HTML report with visual diff results
  * @param comparisonResults - Results from comparing matched image pairs
  * @param baselineOnly - Files that exist only in baseline
  * @param candidateOnly - Files that exist only in candidate
@@ -16,67 +22,21 @@ export function generateReport(
   candidateOnly: ScannedFile[],
   outputDir: string,
 ): void {
-  const markdown = generateMarkdown(comparisonResults, baselineOnly, candidateOnly);
-  writeFileSync(join(outputDir, 'OUTPUT.md'), markdown);
+  const html = generateHTML(comparisonResults, baselineOnly, candidateOnly);
+  writeFileSync(join(outputDir, 'index.html'), html);
 }
 
 /**
- * Helper to create markdown sections
+ * Generates the HTML content for the report
  */
-class MarkdownBuilder {
-  private content: string[] = [];
-
-  heading(level: number, text: string): this {
-    this.content.push(`${'#'.repeat(level)} ${text}\n`);
-    return this;
-  }
-
-  paragraph(text: string): this {
-    this.content.push(`${text}\n`);
-    return this;
-  }
-
-  list(items: string[]): this {
-    items.forEach((item) => this.content.push(`- ${item}\n`));
-    this.content.push('\n');
-    return this;
-  }
-
-  image(alt: string, src: string): this {
-    // Use angle bracket syntax if path contains spaces to ensure valid markdown
-    const formattedSrc = src.includes(' ') ? `<${src}>` : src;
-    this.content.push(`![${alt}](${formattedSrc})\n`);
-    return this;
-  }
-
-  bold(text: string): string {
-    return `**${text}**`;
-  }
-
-  divider(): this {
-    this.content.push('\n---\n');
-    return this;
-  }
-
-  newline(): this {
-    this.content.push('\n');
-    return this;
-  }
-
-  build(): string {
-    return this.content.join('');
-  }
-}
-
-/**
- * Generates the markdown content for the report
- */
-function generateMarkdown(
+function generateHTML(
   comparisonResults: ComparisonResult[],
   baselineOnly: ScannedFile[],
   candidateOnly: ScannedFile[],
 ): string {
-  const md = new MarkdownBuilder();
+  // Load and compile template
+  const templateSource = readFileSync(join(TEMPLATES_DIR, 'report.html'), 'utf-8');
+  const template = Handlebars.compile(templateSource);
 
   // Separate results into categories
   const withDifferences = comparisonResults.filter((r) => r.hasDifference);
@@ -93,65 +53,30 @@ function generateMarkdown(
   const statusEmoji = hasFailed ? '❌' : '✅';
   const statusText = hasFailed ? 'FAILED' : 'PASSED';
 
-  // Header and summary
-  md.heading(1, 'Visual Diff Report')
-    .newline()
-    .paragraph(`${md.bold('Status:')} ${statusEmoji} ${statusText}`)
-    .newline()
-    .heading(2, 'Summary')
-    .newline()
-    .list([
-      `${md.bold('Total Images:')} ${totalImages}`,
-      `${md.bold('Different:')} ${diffCount}`,
-      `${md.bold('Removed:')} ${removedCount}`,
-      `${md.bold('Added:')} ${addedCount}`,
-      `${md.bold('Identical:')} ${withoutDifferences.length}`,
-    ]);
+  // Prepare data for template
+  const data = {
+    statusEmoji,
+    statusText,
+    totalImages,
+    diffCount,
+    removedCount,
+    addedCount,
+    identicalCount: withoutDifferences.length,
+    withDifferences: withDifferences.map((result) => ({
+      name: result.name,
+      dimensionMismatch: result.dimensionMismatch,
+      diffPercentage: result.diffPercentage.toFixed(2),
+      baselineImage: basename(result.baselineImagePath),
+      diffImage: basename(result.diffImagePath),
+      candidateImage: basename(result.candidateImagePath),
+    })),
+    withoutDifferences: withoutDifferences.map((result) => ({
+      name: result.name,
+    })),
+    baselineOnly: baselineOnly.map((file) => ({ name: file.name })),
+    candidateOnly: candidateOnly.map((file) => ({ name: file.name })),
+    hasRemovedOrAdded: baselineOnly.length > 0 || candidateOnly.length > 0,
+  };
 
-  // Images with differences
-  if (withDifferences.length > 0) {
-    md.heading(2, `Images with Differences (${withDifferences.length})`).newline();
-
-    withDifferences.forEach((result) => {
-      const diffImageName = basename(result.diffImagePath);
-      md.heading(3, result.name).newline();
-
-      if (result.dimensionMismatch) {
-        md.paragraph(
-          `${md.bold('Dimension mismatch:')} Baseline ${result.dimensionMismatch.baseline}, Candidate ${result.dimensionMismatch.candidate}`,
-        ).newline();
-      } else {
-        md.paragraph(`${md.bold('Difference:')} ${result.diffPercentage.toFixed(2)}%`).newline();
-      }
-
-      md.image(`${result.name} diff`, diffImageName).newline();
-    });
-  }
-
-  // Missing or new files
-  if (baselineOnly.length > 0 || candidateOnly.length > 0) {
-    md.heading(2, 'Missing or New Files').newline();
-
-    if (baselineOnly.length > 0) {
-      md.heading(3, `Removed from Candidate (${baselineOnly.length})`).newline();
-      md.list(baselineOnly.map((file) => file.name));
-    }
-
-    if (candidateOnly.length > 0) {
-      md.heading(3, `Added in Candidate (${candidateOnly.length})`).newline();
-      md.list(candidateOnly.map((file) => file.name));
-    }
-  }
-
-  // Identical images
-  if (withoutDifferences.length > 0) {
-    md.heading(2, `Identical Images (${withoutDifferences.length})`)
-      .newline()
-      .list(withoutDifferences.map((result) => result.name));
-  }
-
-  // Footer
-  md.divider().newline().paragraph('*Generated by visual-differ*');
-
-  return md.build();
+  return template(data);
 }

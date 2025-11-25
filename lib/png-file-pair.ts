@@ -28,8 +28,22 @@ export class PngFilePair {
   public readonly name: string;
   public readonly width: number;
   public readonly height: number;
-  public readonly baselineData: Buffer;
-  public readonly candidateData: Buffer;
+  public readonly baselinePng: PNG;
+  public readonly candidatePng: PNG;
+
+  /**
+   * Gets the baseline image pixel data buffer
+   */
+  get baselineData(): Buffer {
+    return this.baselinePng.data;
+  }
+
+  /**
+   * Gets the candidate image pixel data buffer
+   */
+  get candidateData(): Buffer {
+    return this.candidatePng.data;
+  }
 
   /**
    * Creates a PngFilePair by loading and validating two matched PNG files
@@ -72,7 +86,7 @@ export class PngFilePair {
 
     this.width = baselinePng.width;
     this.height = baselinePng.height;
-    this.baselineData = baselinePng.data;
-    this.candidateData = candidatePng.data;
+    this.baselinePng = baselinePng;
+    this.candidatePng = candidatePng;
   }
 }

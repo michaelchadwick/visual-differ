@@ -75,7 +75,7 @@ program
         console.log('❌ Visual differences detected.');
       }
 
-      console.log(`\n📄 Report generated: ${resolvedOutput}/OUTPUT.md\n`);
+      console.log(`\n📄 Report generated: ${resolvedOutput}/index.html\n`);
 
       process.exit(result.exitCode);
     } catch (error) {

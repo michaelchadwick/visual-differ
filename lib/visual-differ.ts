@@ -1,4 +1,6 @@
 import { join } from 'path';
+import { readFileSync, writeFileSync } from 'fs';
+import { PNG } from 'pngjs';
 import { scanAndMatchFiles } from './file-scanner.js';
 import { PngFilePair, DimensionMismatchError } from './png-file-pair.js';
 import { compareImages, type ComparisonResult } from './image-comparer.js';
@@ -49,17 +51,28 @@ export function compareDirectories(
         { name: matched.name, path: matched.candidatePath },
       );
 
-      const diffPath = join(outputDir, `${matched.name}-diff.png`);
-      return compareImages(pngPair, diffPath);
+      return compareImages(pngPair, outputDir);
     } catch (error) {
       // Handle dimension mismatches gracefully by treating them as 100% different
       if (error instanceof DimensionMismatchError) {
-        const diffPath = join(outputDir, `${matched.name}-diff.png`);
+        const baselineOutputPath = join(outputDir, `${matched.name}-baseline.png`);
+        const candidateOutputPath = join(outputDir, `${matched.name}-candidate.png`);
+        const diffOutputPath = join(outputDir, `${matched.name}-diff.png`);
+        
+        // For dimension mismatches, load and write the PNGs separately
+        const baselinePng = PNG.sync.read(readFileSync(matched.baselinePath));
+        const candidatePng = PNG.sync.read(readFileSync(matched.candidatePath));
+        
+        writeFileSync(baselineOutputPath, PNG.sync.write(baselinePng));
+        writeFileSync(candidateOutputPath, PNG.sync.write(candidatePng));
+        
         return {
           name: matched.name,
           hasDifference: true,
           diffPercentage: 100,
-          diffImagePath: diffPath,
+          baselineImagePath: baselineOutputPath,
+          candidateImagePath: candidateOutputPath,
+          diffImagePath: diffOutputPath,
           dimensionMismatch: {
             baseline: `${error.baselineWidth}x${error.baselineHeight}`,
             candidate: `${error.candidateWidth}x${error.candidateHeight}`,

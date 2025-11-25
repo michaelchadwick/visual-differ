@@ -75,13 +75,13 @@ describe('visual-differ', () => {
       expect(existsSync(join(outputDir, 'changed.png-diff.png'))).toBe(true);
     });
 
-    it('should generate OUTPUT.md report', () => {
+    it('should generate index.html report', () => {
       writeFileSync(join(baselineDir, 'image1.png'), RED_PNG);
       writeFileSync(join(candidateDir, 'image1.png'), RED_PNG);
 
       compareDirectories(baselineDir, candidateDir, outputDir);
 
-      expect(existsSync(join(outputDir, 'OUTPUT.md'))).toBe(true);
+      expect(existsSync(join(outputDir, 'index.html'))).toBe(true);
     });
 
     it('should handle multiple images correctly', () => {
@@ -156,10 +156,10 @@ describe('visual-differ', () => {
 
       compareDirectories(baselineDir, candidateDir, outputDir);
 
-      const markdown = readFileSync(join(outputDir, 'OUTPUT.md'), 'utf-8');
-      expect(markdown).toContain('Dimension mismatch');
-      expect(markdown).toContain('1x1');
-      expect(markdown).toContain('2x2');
+      const html = readFileSync(join(outputDir, 'index.html'), 'utf-8');
+      expect(html).toContain('Dimension mismatch');
+      expect(html).toContain('1x1');
+      expect(html).toContain('2x2');
     });
   });
 });
