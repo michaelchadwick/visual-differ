@@ -2,18 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { PngFilePair } from '../lib/png-file-pair.js';
-
-// Valid 1x1 red PNG (base64 encoded)
-const RED_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==',
-  'base64',
-);
-
-// Valid 2x2 red PNG (base64 encoded)
-const LARGE_RED_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAE0lEQVR4AWP8z8DwnwEImBigAAAfFwICgH3ifwAAAABJRU5ErkJggg==',
-  'base64',
-);
+import { RED_PNG, LARGE_RED_PNG } from './fixtures/png-fixtures.js';
 
 describe('PngFilePair', () => {
   const testDir = join(process.cwd(), 'test-fixtures-png-pair');

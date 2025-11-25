@@ -3,18 +3,7 @@ import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 import { PngFilePair } from '../lib/png-file-pair.js';
 import { compareImages, type ComparisonResult } from '../lib/image-comparer.js';
-
-// Valid 1x1 red PNG (base64 encoded)
-const RED_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==',
-  'base64',
-);
-
-// Valid 1x1 blue PNG (base64 encoded)
-const BLUE_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMCbHYQAAAABJRU5ErkJggg==',
-  'base64',
-);
+import { RED_PNG, BLUE_PNG } from './fixtures/png-fixtures.js';
 
 describe('image-comparer', () => {
   const testDir = join(process.cwd(), 'test-fixtures-comparer');
