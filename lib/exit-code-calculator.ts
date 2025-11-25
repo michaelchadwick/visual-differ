@@ -3,11 +3,11 @@ import type { ScannedFile } from './file-scanner.js';
 
 /**
  * Calculates the appropriate exit code based on comparison results
- * 
+ *
  * Exit code logic:
  * - 0: Success - no visual differences detected, only new files allowed
  * - 1: Failure - visual differences found or files removed from baseline
- * 
+ *
  * @param comparisonResults - Results from comparing matched image pairs
  * @param baselineOnly - Files that exist only in baseline (deleted in candidate)
  * @returns Exit code (0 for success, 1 for failure)

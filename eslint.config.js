@@ -7,7 +7,7 @@ import prettierPlugin from 'eslint-plugin-prettier';
 export default [
   js.configs.recommended,
   {
-    files: ['**/*.ts'],
+    files: ['lib/**/*.ts', 'bin/**/*.ts'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -37,6 +37,33 @@ export default [
       ],
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/strict-boolean-expressions': 'error',
+    },
+  },
+  {
+    files: ['test/**/*.ts', '*.config.ts'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        Buffer: 'readonly',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tsPlugin,
+      prettier: prettierPlugin,
+    },
+    rules: {
+      ...tsPlugin.configs['recommended'].rules,
+      'prettier/prettier': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
     },
   },
   prettierConfig,

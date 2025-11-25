@@ -21,7 +21,6 @@ describe('exit-code-calculator', () => {
         },
       ];
       const baselineOnly: ScannedFile[] = [];
-      const candidateOnly: ScannedFile[] = [];
 
       const exitCode = calculateExitCode(comparisonResults, baselineOnly);
 
@@ -31,9 +30,6 @@ describe('exit-code-calculator', () => {
     it('should return 0 when there are only candidate-only files (new screenshots)', () => {
       const comparisonResults: ComparisonResult[] = [];
       const baselineOnly: ScannedFile[] = [];
-      const candidateOnly: ScannedFile[] = [
-        { name: 'new-image.png', path: '/candidate/new-image.png' },
-      ];
 
       const exitCode = calculateExitCode(comparisonResults, baselineOnly);
 
@@ -50,9 +46,6 @@ describe('exit-code-calculator', () => {
         },
       ];
       const baselineOnly: ScannedFile[] = [];
-      const candidateOnly: ScannedFile[] = [
-        { name: 'new-image.png', path: '/candidate/new-image.png' },
-      ];
 
       const exitCode = calculateExitCode(comparisonResults, baselineOnly);
 
@@ -69,7 +62,6 @@ describe('exit-code-calculator', () => {
         },
       ];
       const baselineOnly: ScannedFile[] = [];
-      const candidateOnly: ScannedFile[] = [];
 
       const exitCode = calculateExitCode(comparisonResults, baselineOnly);
 
@@ -81,7 +73,6 @@ describe('exit-code-calculator', () => {
       const baselineOnly: ScannedFile[] = [
         { name: 'deleted-image.png', path: '/baseline/deleted-image.png' },
       ];
-      const candidateOnly: ScannedFile[] = [];
 
       const exitCode = calculateExitCode(comparisonResults, baselineOnly);
 
@@ -100,7 +91,6 @@ describe('exit-code-calculator', () => {
       const baselineOnly: ScannedFile[] = [
         { name: 'deleted-image.png', path: '/baseline/deleted-image.png' },
       ];
-      const candidateOnly: ScannedFile[] = [];
 
       const exitCode = calculateExitCode(comparisonResults, baselineOnly);
 
@@ -117,9 +107,6 @@ describe('exit-code-calculator', () => {
         },
       ];
       const baselineOnly: ScannedFile[] = [];
-      const candidateOnly: ScannedFile[] = [
-        { name: 'new-image.png', path: '/candidate/new-image.png' },
-      ];
 
       const exitCode = calculateExitCode(comparisonResults, baselineOnly);
 

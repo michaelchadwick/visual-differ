@@ -58,14 +58,14 @@ export function compareDirectories(
         const baselineOutputPath = join(outputDir, `${matched.name}-baseline.png`);
         const candidateOutputPath = join(outputDir, `${matched.name}-candidate.png`);
         const diffOutputPath = join(outputDir, `${matched.name}-diff.png`);
-        
+
         // For dimension mismatches, load and write the PNGs separately
         const baselinePng = PNG.sync.read(readFileSync(matched.baselinePath));
         const candidatePng = PNG.sync.read(readFileSync(matched.candidatePath));
-        
+
         writeFileSync(baselineOutputPath, PNG.sync.write(baselinePng));
         writeFileSync(candidateOutputPath, PNG.sync.write(candidatePng));
-        
+
         return {
           name: matched.name,
           hasDifference: true,

@@ -39,9 +39,7 @@ describe('report-generator', () => {
           diffImagePath: join(testDir, 'changed-diff.png'),
         },
       ];
-      const baselineOnly: ScannedFile[] = [
-        { name: 'deleted.png', path: '/baseline/deleted.png' },
-      ];
+      const baselineOnly: ScannedFile[] = [{ name: 'deleted.png', path: '/baseline/deleted.png' }];
       const candidateOnly: ScannedFile[] = [{ name: 'new.png', path: '/candidate/new.png' }];
 
       generateReport(comparisonResults, baselineOnly, candidateOnly, testDir);
