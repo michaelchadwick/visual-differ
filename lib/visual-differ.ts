@@ -1,6 +1,6 @@
 import { join } from 'path';
 import { scanAndMatchFiles } from './file-scanner.js';
-import { PngFilePair } from './png-file-pair.js';
+import { PngFilePair, DimensionMismatchError } from './png-file-pair.js';
 import { compareImages, type ComparisonResult } from './image-comparer.js';
 import { calculateExitCode } from './exit-code-calculator.js';
 import { generateReport } from './report-generator.js';
@@ -25,9 +25,9 @@ export interface CompareResult {
 
 /**
  * Compares two directories of PNG screenshots and generates a visual diff report
- * 
+ *
  * @param baselineDir - Directory containing baseline (expected) screenshots
- * @param candidateDir - Directory containing candidate (actual) screenshots  
+ * @param candidateDir - Directory containing candidate (actual) screenshots
  * @param outputDir - Directory where diff images and report will be written
  * @returns Summary of comparison results
  * @throws Error if directories don't exist or comparison fails
@@ -42,14 +42,29 @@ export function compareDirectories(
 
   // Load and compare matched PNG pairs
   const comparisonResults: ComparisonResult[] = fileMatches.matched.map((matched) => {
-    const pngPair = new PngFilePair(
-      matched.name,
-      { name: matched.name, path: matched.baselinePath },
-      { name: matched.name, path: matched.candidatePath },
-    );
+    try {
+      const pngPair = new PngFilePair(
+        matched.name,
+        { name: matched.name, path: matched.baselinePath },
+        { name: matched.name, path: matched.candidatePath },
+      );
 
-    const diffPath = join(outputDir, `${matched.name}-diff.png`);
-    return compareImages(pngPair, diffPath);
+      const diffPath = join(outputDir, `${matched.name}-diff.png`);
+      return compareImages(pngPair, diffPath);
+    } catch (error) {
+      // Handle dimension mismatches gracefully by treating them as 100% different
+      if (error instanceof DimensionMismatchError) {
+        const diffPath = join(outputDir, `${matched.name}-diff.png`);
+        return {
+          name: matched.name,
+          hasDifference: true,
+          diffPercentage: 100,
+          diffImagePath: diffPath,
+        };
+      }
+      // Re-throw unexpected errors
+      throw error;
+    }
   });
 
   // Calculate exit code

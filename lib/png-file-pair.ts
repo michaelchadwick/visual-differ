@@ -4,6 +4,24 @@ import { readFileSync } from 'fs';
 import type { ScannedFile } from './file-scanner';
 
 /**
+ * Error thrown when baseline and candidate images have different dimensions
+ */
+export class DimensionMismatchError extends Error {
+  constructor(
+    public readonly imageName: string,
+    public readonly baselineWidth: number,
+    public readonly baselineHeight: number,
+    public readonly candidateWidth: number,
+    public readonly candidateHeight: number,
+  ) {
+    super(
+      `Images have different dimensions. ${imageName}: Baseline ${baselineWidth}x${baselineHeight}, Candidate ${candidateWidth}x${candidateHeight}`,
+    );
+    this.name = 'DimensionMismatchError';
+  }
+}
+
+/**
  * Represents a matched pair of PNG files loaded and ready for comparison
  */
 export class PngFilePair {
@@ -43,8 +61,12 @@ export class PngFilePair {
     }
 
     if (baselinePng.width !== candidatePng.width || baselinePng.height !== candidatePng.height) {
-      throw new Error(
-        `Images have different dimensions. ${this.name}: Baseline ${baselinePng.width}x${baselinePng.height}, Candidate ${candidatePng.width}x${candidatePng.height}`,
+      throw new DimensionMismatchError(
+        this.name,
+        baselinePng.width,
+        baselinePng.height,
+        candidatePng.width,
+        candidatePng.height,
       );
     }
 

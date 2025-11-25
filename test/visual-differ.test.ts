@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 import { compareDirectories, type CompareResult } from '../lib/visual-differ.js';
-import { RED_PNG, BLUE_PNG } from './fixtures/png-fixtures.js';
+import { RED_PNG, BLUE_PNG, LARGE_RED_PNG } from './fixtures/png-fixtures.js';
 
 describe('visual-differ', () => {
   const testDir = join(process.cwd(), 'test-fixtures-visual-differ');
@@ -127,6 +127,27 @@ describe('visual-differ', () => {
       expect(result).toHaveProperty('withoutDifferences');
       expect(result).toHaveProperty('removedFiles');
       expect(result).toHaveProperty('addedFiles');
+    });
+
+    it('should handle dimension mismatches gracefully', () => {
+      writeFileSync(join(baselineDir, 'mismatch.png'), RED_PNG); // 1x1
+      writeFileSync(join(candidateDir, 'mismatch.png'), LARGE_RED_PNG); // 2x2
+      writeFileSync(join(baselineDir, 'normal.png'), RED_PNG);
+      writeFileSync(join(candidateDir, 'normal.png'), RED_PNG);
+
+      const result: CompareResult = compareDirectories(baselineDir, candidateDir, outputDir);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.totalImages).toBe(2);
+      expect(result.withDifferences).toBe(1); // mismatch counted as different
+      expect(result.withoutDifferences).toBe(1); // normal is identical
+    });
+
+    it('should throw error for invalid PNG files', () => {
+      writeFileSync(join(baselineDir, 'corrupt.png'), Buffer.from('not a png'));
+      writeFileSync(join(candidateDir, 'corrupt.png'), RED_PNG);
+
+      expect(() => compareDirectories(baselineDir, candidateDir, outputDir)).toThrow();
     });
   });
 });
