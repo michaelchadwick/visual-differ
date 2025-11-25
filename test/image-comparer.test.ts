@@ -1,0 +1,100 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
+import { join } from 'path';
+import { PngFilePair } from '../lib/png-file-pair.js';
+import { compareImages, type ComparisonResult } from '../lib/image-comparer.js';
+
+// Valid 1x1 red PNG (base64 encoded)
+const RED_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==',
+  'base64',
+);
+
+// Valid 1x1 blue PNG (base64 encoded)
+const BLUE_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMCbHYQAAAABJRU5ErkJggg==',
+  'base64',
+);
+
+describe('image-comparer', () => {
+  const testDir = join(process.cwd(), 'test-fixtures-comparer');
+  const outputDir = join(testDir, 'output');
+
+  beforeEach(() => {
+    rmSync(testDir, { recursive: true, force: true });
+    mkdirSync(testDir, { recursive: true });
+    mkdirSync(outputDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    rmSync(testDir, { recursive: true, force: true });
+  });
+
+  describe('compareImages', () => {
+    it('should detect identical images', () => {
+      const baselinePath = join(testDir, 'image.png');
+      const candidatePath = join(testDir, 'image2.png');
+      const diffPath = join(outputDir, 'diff.png');
+
+      writeFileSync(baselinePath, RED_PNG);
+      writeFileSync(candidatePath, RED_PNG);
+
+      const pair = new PngFilePair(
+        'image.png',
+        { name: 'image.png', path: baselinePath },
+        { name: 'image.png', path: candidatePath },
+      );
+
+      const result: ComparisonResult = compareImages(pair, diffPath);
+
+      expect(result.name).toBe('image.png');
+      expect(result.hasDifference).toBe(false);
+      expect(result.diffPercentage).toBe(0);
+      expect(result.diffImagePath).toBe(diffPath);
+      expect(existsSync(diffPath)).toBe(true);
+    });
+
+    it('should detect different images', () => {
+      const baselinePath = join(testDir, 'red.png');
+      const candidatePath = join(testDir, 'blue.png');
+      const diffPath = join(outputDir, 'diff.png');
+
+      writeFileSync(baselinePath, RED_PNG);
+      writeFileSync(candidatePath, BLUE_PNG);
+
+      const pair = new PngFilePair(
+        'test.png',
+        { name: 'test.png', path: baselinePath },
+        { name: 'test.png', path: candidatePath },
+      );
+
+      const result: ComparisonResult = compareImages(pair, diffPath);
+
+      expect(result.name).toBe('test.png');
+      expect(result.hasDifference).toBe(true);
+      expect(result.diffPercentage).toBeGreaterThan(0);
+      expect(result.diffImagePath).toBe(diffPath);
+      expect(existsSync(diffPath)).toBe(true);
+    });
+
+    it('should calculate correct diff percentage', () => {
+      const baselinePath = join(testDir, 'red.png');
+      const candidatePath = join(testDir, 'blue.png');
+      const diffPath = join(outputDir, 'diff.png');
+
+      writeFileSync(baselinePath, RED_PNG);
+      writeFileSync(candidatePath, BLUE_PNG);
+
+      const pair = new PngFilePair(
+        'test.png',
+        { name: 'test.png', path: baselinePath },
+        { name: 'test.png', path: candidatePath },
+      );
+
+      const result: ComparisonResult = compareImages(pair, diffPath);
+
+      // For 1x1 image with one different pixel, it should be 100%
+      expect(result.diffPercentage).toBe(100);
+    });
+  });
+});
