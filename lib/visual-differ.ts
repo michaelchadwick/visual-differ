@@ -53,11 +53,7 @@ export function compareDirectories(
   });
 
   // Calculate exit code
-  const exitCode = calculateExitCode(
-    comparisonResults,
-    fileMatches.baselineOnly,
-    fileMatches.candidateOnly,
-  );
+  const exitCode = calculateExitCode(comparisonResults, fileMatches.baselineOnly);
 
   // Generate report
   generateReport(comparisonResults, fileMatches.baselineOnly, fileMatches.candidateOnly, outputDir);

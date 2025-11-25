@@ -23,7 +23,7 @@ describe('exit-code-calculator', () => {
       const baselineOnly: ScannedFile[] = [];
       const candidateOnly: ScannedFile[] = [];
 
-      const exitCode = calculateExitCode(comparisonResults, baselineOnly, candidateOnly);
+      const exitCode = calculateExitCode(comparisonResults, baselineOnly);
 
       expect(exitCode).toBe(0);
     });
@@ -35,7 +35,7 @@ describe('exit-code-calculator', () => {
         { name: 'new-image.png', path: '/candidate/new-image.png' },
       ];
 
-      const exitCode = calculateExitCode(comparisonResults, baselineOnly, candidateOnly);
+      const exitCode = calculateExitCode(comparisonResults, baselineOnly);
 
       expect(exitCode).toBe(0);
     });
@@ -54,7 +54,7 @@ describe('exit-code-calculator', () => {
         { name: 'new-image.png', path: '/candidate/new-image.png' },
       ];
 
-      const exitCode = calculateExitCode(comparisonResults, baselineOnly, candidateOnly);
+      const exitCode = calculateExitCode(comparisonResults, baselineOnly);
 
       expect(exitCode).toBe(0);
     });
@@ -71,7 +71,7 @@ describe('exit-code-calculator', () => {
       const baselineOnly: ScannedFile[] = [];
       const candidateOnly: ScannedFile[] = [];
 
-      const exitCode = calculateExitCode(comparisonResults, baselineOnly, candidateOnly);
+      const exitCode = calculateExitCode(comparisonResults, baselineOnly);
 
       expect(exitCode).toBe(1);
     });
@@ -83,7 +83,7 @@ describe('exit-code-calculator', () => {
       ];
       const candidateOnly: ScannedFile[] = [];
 
-      const exitCode = calculateExitCode(comparisonResults, baselineOnly, candidateOnly);
+      const exitCode = calculateExitCode(comparisonResults, baselineOnly);
 
       expect(exitCode).toBe(1);
     });
@@ -102,7 +102,7 @@ describe('exit-code-calculator', () => {
       ];
       const candidateOnly: ScannedFile[] = [];
 
-      const exitCode = calculateExitCode(comparisonResults, baselineOnly, candidateOnly);
+      const exitCode = calculateExitCode(comparisonResults, baselineOnly);
 
       expect(exitCode).toBe(1);
     });
@@ -121,7 +121,7 @@ describe('exit-code-calculator', () => {
         { name: 'new-image.png', path: '/candidate/new-image.png' },
       ];
 
-      const exitCode = calculateExitCode(comparisonResults, baselineOnly, candidateOnly);
+      const exitCode = calculateExitCode(comparisonResults, baselineOnly);
 
       expect(exitCode).toBe(1);
     });

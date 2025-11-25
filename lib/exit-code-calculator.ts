@@ -10,13 +10,11 @@ import type { ScannedFile } from './file-scanner.js';
  * 
  * @param comparisonResults - Results from comparing matched image pairs
  * @param baselineOnly - Files that exist only in baseline (deleted in candidate)
- * @param candidateOnly - Files that exist only in candidate (new files)
  * @returns Exit code (0 for success, 1 for failure)
  */
 export function calculateExitCode(
   comparisonResults: ComparisonResult[],
   baselineOnly: ScannedFile[],
-  candidateOnly: ScannedFile[],
 ): number {
   // Check if any compared images have differences
   const hasDifferences = comparisonResults.some((result) => result.hasDifference);
