@@ -1,22 +1,20 @@
 {
   "name": "visual-differ",
   "version": "1.0.0",
-  "description": "A modern CLI tool for comparing screenshot directories using odiff with accessible HTML reports",
+  "description": "CLI tool for comparing screenshot directories using pixel-perfect image comparison with accessible HTML reports",
   "type": "module",
-  "main": "./dist/lib/visual-differ.js",
   "bin": {
     "visual-differ": "./dist/bin/visual-differ.js"
   },
   "files": [
-    "dist",
-    "templates"
+    "dist"
   ],
   "scripts": {
     "build": "tsc && cp -r templates dist/",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,json,md}\"",
     "typecheck": "tsc --noEmit",
@@ -26,13 +24,19 @@
   "keywords": [
     "screenshot",
     "visual-diff",
-    "odiff",
+    "visual-regression",
+    "image-comparison",
+    "pixelmatch",
     "testing",
     "ci",
-    "visual-regression"
+    "cli"
   ],
-  "author": "",
+  "author": "Jon Johnson <jon.johnson@ucsf.edu>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jrjohnson/visual-differ.git"
+  },
   "packageManager": "pnpm@10.23.0",
   "engines": {
     "node": ">=24.0.0"
