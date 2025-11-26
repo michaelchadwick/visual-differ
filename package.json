@@ -1,0 +1,66 @@
+{
+  "name": "visual-differ",
+  "version": "0.0.1",
+  "description": "CLI tool for comparing screenshot directories using pixel-perfect image comparison with HTML reports",
+  "type": "module",
+  "bin": {
+    "visual-differ": "./dist/bin/visual-differ.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc && cp -r templates dist/",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "format": "prettier --write \"**/*.{ts,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,json,md}\"",
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky",
+    "prepublishOnly": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build"
+  },
+  "keywords": [
+    "screenshot",
+    "visual-diff",
+    "visual-regression",
+    "image-comparison",
+    "pixelmatch",
+    "testing",
+    "ci",
+    "cli"
+  ],
+  "author": "Jon Johnson <jon.johnson@ucsf.edu>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jrjohnson/visual-differ.git"
+  },
+  "packageManager": "pnpm@10.23.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "@types/pngjs": "^6.0.5",
+    "@typescript-eslint/eslint-plugin": "^8.48.0",
+    "@typescript-eslint/parser": "^8.48.0",
+    "@vitest/coverage-v8": "^4.0.13",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.13"
+  },
+  "dependencies": {
+    "commander": "^14.0.2",
+    "handlebars": "^4.7.8",
+    "pixelmatch": "^7.1.0",
+    "pngjs": "^7.0.0"
+  }
+}
