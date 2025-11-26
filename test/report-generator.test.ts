@@ -1,53 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, rmSync, readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
-import { PNG } from 'pngjs';
+import { TestDirectory } from './helpers/test-utils.js';
 import { generateReport } from '../lib/report-generator.js';
 import type { ComparisonResult } from '../lib/image-comparer.js';
 import type { ScannedFile } from '../lib/file-scanner.js';
-import type { PngFilePair } from '../lib/png-file-pair.js';
-
-// Helper to create a mock PngFilePair for testing
-function createMockPair(name: string, outputDir: string): PngFilePair {
-  const mockPng = new PNG({ width: 1, height: 1 });
-  return {
-    name,
-    outputDir,
-    width: 1,
-    height: 1,
-    baselinePng: mockPng,
-    candidatePng: mockPng,
-    get baselineData() {
-      return mockPng.data;
-    },
-    get candidateData() {
-      return mockPng.data;
-    },
-    get hasDimensionMismatch() {
-      return false;
-    },
-    get baselinePath() {
-      return join(outputDir, `${name.replace(/\.png$/i, '')}-baseline.png`);
-    },
-    get candidatePath() {
-      return join(outputDir, `${name.replace(/\.png$/i, '')}-candidate.png`);
-    },
-    get diffPath() {
-      return join(outputDir, `${name.replace(/\.png$/i, '')}-diff.png`);
-    },
-  } as unknown as PngFilePair;
-}
 
 describe('report-generator', () => {
-  const testDir = join(process.cwd(), 'test-fixtures-report');
+  const testDir = new TestDirectory(join(process.cwd(), 'test-fixtures-report'));
 
   beforeEach(() => {
-    rmSync(testDir, { recursive: true, force: true });
-    mkdirSync(testDir, { recursive: true });
+    testDir.setup();
   });
 
   afterEach(() => {
-    rmSync(testDir, { recursive: true, force: true });
+    testDir.cleanup();
   });
 
   describe('generateReport', () => {
@@ -56,15 +23,16 @@ describe('report-generator', () => {
       const baselineOnly: ScannedFile[] = [];
       const candidateOnly: ScannedFile[] = [];
 
-      generateReport(comparisonResults, baselineOnly, candidateOnly, testDir);
+      generateReport(comparisonResults, baselineOnly, candidateOnly, testDir.outputDir);
 
-      expect(existsSync(join(testDir, 'index.html'))).toBe(true);
+      expect(existsSync(join(testDir.outputDir, 'index.html'))).toBe(true);
     });
 
     it('should include summary with counts', () => {
+      const pair = testDir.createPngFilePair('changed.png', 'red', 'blue');
       const comparisonResults: ComparisonResult[] = [
         {
-          pair: createMockPair('changed.png', testDir),
+          pair,
           hasDifference: true,
           diffPercentage: 25.5,
         },
@@ -72,9 +40,9 @@ describe('report-generator', () => {
       const baselineOnly: ScannedFile[] = [{ name: 'deleted.png', path: '/baseline/deleted.png' }];
       const candidateOnly: ScannedFile[] = [{ name: 'new.png', path: '/candidate/new.png' }];
 
-      generateReport(comparisonResults, baselineOnly, candidateOnly, testDir);
+      generateReport(comparisonResults, baselineOnly, candidateOnly, testDir.outputDir);
 
-      const html = readFileSync(join(testDir, 'index.html'), 'utf-8');
+      const html = readFileSync(join(testDir.outputDir, 'index.html'), 'utf-8');
 
       expect(html).toContain('Visual Diff Report');
       expect(html).toMatch(/total.*3/i);
@@ -84,9 +52,10 @@ describe('report-generator', () => {
     });
 
     it('should show three images side-by-side for differences', () => {
+      const pair = testDir.createPngFilePair('changed.png', 'red', 'blue');
       const comparisonResults: ComparisonResult[] = [
         {
-          pair: createMockPair('changed.png', testDir),
+          pair,
           hasDifference: true,
           diffPercentage: 15.75,
         },
@@ -94,9 +63,9 @@ describe('report-generator', () => {
       const baselineOnly: ScannedFile[] = [];
       const candidateOnly: ScannedFile[] = [];
 
-      generateReport(comparisonResults, baselineOnly, candidateOnly, testDir);
+      generateReport(comparisonResults, baselineOnly, candidateOnly, testDir.outputDir);
 
-      const html = readFileSync(join(testDir, 'index.html'), 'utf-8');
+      const html = readFileSync(join(testDir.outputDir, 'index.html'), 'utf-8');
 
       // Should reference all three images
       expect(html).toContain('changed-baseline.png');
@@ -106,9 +75,10 @@ describe('report-generator', () => {
     });
 
     it('should handle dimension mismatch display', () => {
+      const pair = testDir.createPngFilePair('mismatched.png', 'red', 'largeRed');
       const comparisonResults: ComparisonResult[] = [
         {
-          pair: createMockPair('mismatched.png', testDir),
+          pair,
           hasDifference: true,
           diffPercentage: 100,
           dimensionMismatch: { baseline: '10x20', candidate: '20x30' },
@@ -117,9 +87,9 @@ describe('report-generator', () => {
       const baselineOnly: ScannedFile[] = [];
       const candidateOnly: ScannedFile[] = [];
 
-      generateReport(comparisonResults, baselineOnly, candidateOnly, testDir);
+      generateReport(comparisonResults, baselineOnly, candidateOnly, testDir.outputDir);
 
-      const html = readFileSync(join(testDir, 'index.html'), 'utf-8');
+      const html = readFileSync(join(testDir.outputDir, 'index.html'), 'utf-8');
 
       expect(html).toContain('Dimension mismatch');
       expect(html).toContain('10x20');
@@ -127,9 +97,10 @@ describe('report-generator', () => {
     });
 
     it('should show status indicator', () => {
+      const pair = testDir.createPngFilePair('changed.png', 'red', 'blue');
       const comparisonResults: ComparisonResult[] = [
         {
-          pair: createMockPair('changed.png', testDir),
+          pair,
           hasDifference: true,
           diffPercentage: 15.75,
         },
@@ -137,17 +108,18 @@ describe('report-generator', () => {
       const baselineOnly: ScannedFile[] = [];
       const candidateOnly: ScannedFile[] = [];
 
-      generateReport(comparisonResults, baselineOnly, candidateOnly, testDir);
+      generateReport(comparisonResults, baselineOnly, candidateOnly, testDir.outputDir);
 
-      const html = readFileSync(join(testDir, 'index.html'), 'utf-8');
+      const html = readFileSync(join(testDir.outputDir, 'index.html'), 'utf-8');
 
       expect(html.toLowerCase()).toMatch(/fail|❌|✗/);
     });
 
     it('should show success status when no differences', () => {
+      const pair = testDir.createPngFilePair('unchanged.png', 'red', 'red');
       const comparisonResults: ComparisonResult[] = [
         {
-          pair: createMockPair('unchanged.png', testDir),
+          pair,
           hasDifference: false,
           diffPercentage: 0,
         },
@@ -155,9 +127,9 @@ describe('report-generator', () => {
       const baselineOnly: ScannedFile[] = [];
       const candidateOnly: ScannedFile[] = [];
 
-      generateReport(comparisonResults, baselineOnly, candidateOnly, testDir);
+      generateReport(comparisonResults, baselineOnly, candidateOnly, testDir.outputDir);
 
-      const html = readFileSync(join(testDir, 'index.html'), 'utf-8');
+      const html = readFileSync(join(testDir.outputDir, 'index.html'), 'utf-8');
 
       expect(html.toLowerCase()).toMatch(/pass|✓|✔/);
     });

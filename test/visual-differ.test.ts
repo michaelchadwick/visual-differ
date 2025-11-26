@@ -1,32 +1,30 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from 'fs';
+import { writeFileSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
+import { TestDirectory } from './helpers/test-utils.js';
 import { compareDirectories, type CompareResult } from '../lib/visual-differ.js';
-import { RED_PNG, BLUE_PNG, LARGE_RED_PNG } from './fixtures/png-fixtures.js';
 
 describe('visual-differ', () => {
-  const testDir = join(process.cwd(), 'test-fixtures-visual-differ');
-  const baselineDir = join(testDir, 'baseline');
-  const candidateDir = join(testDir, 'candidate');
-  const outputDir = join(testDir, 'output');
+  const testDir = new TestDirectory(join(process.cwd(), 'test-fixtures-visual-differ'));
 
   beforeEach(() => {
-    rmSync(testDir, { recursive: true, force: true });
-    mkdirSync(baselineDir, { recursive: true });
-    mkdirSync(candidateDir, { recursive: true });
-    mkdirSync(outputDir, { recursive: true });
+    testDir.setup();
   });
 
   afterEach(() => {
-    rmSync(testDir, { recursive: true, force: true });
+    testDir.cleanup();
   });
 
   describe('compareDirectories', () => {
     it('should return exit code 0 when all images are identical', () => {
-      writeFileSync(join(baselineDir, 'image1.png'), RED_PNG);
-      writeFileSync(join(candidateDir, 'image1.png'), RED_PNG);
+      testDir.writeBaseline('image1.png', 'red');
+      testDir.writeCandidate('image1.png', 'red');
 
-      const result: CompareResult = compareDirectories(baselineDir, candidateDir, outputDir);
+      const result: CompareResult = compareDirectories(
+        testDir.baselineDir,
+        testDir.candidateDir,
+        testDir.outputDir,
+      );
 
       expect(result.exitCode).toBe(0);
       expect(result.totalImages).toBe(1);
@@ -35,10 +33,14 @@ describe('visual-differ', () => {
     });
 
     it('should return exit code 1 when images have differences', () => {
-      writeFileSync(join(baselineDir, 'image1.png'), RED_PNG);
-      writeFileSync(join(candidateDir, 'image1.png'), BLUE_PNG);
+      testDir.writeBaseline('image1.png', 'red');
+      testDir.writeCandidate('image1.png', 'blue');
 
-      const result: CompareResult = compareDirectories(baselineDir, candidateDir, outputDir);
+      const result: CompareResult = compareDirectories(
+        testDir.baselineDir,
+        testDir.candidateDir,
+        testDir.outputDir,
+      );
 
       expect(result.exitCode).toBe(1);
       expect(result.totalImages).toBe(1);
@@ -47,9 +49,13 @@ describe('visual-differ', () => {
     });
 
     it('should return exit code 1 when baseline files are missing', () => {
-      writeFileSync(join(baselineDir, 'deleted.png'), RED_PNG);
+      testDir.writeBaseline('deleted.png', 'red');
 
-      const result: CompareResult = compareDirectories(baselineDir, candidateDir, outputDir);
+      const result: CompareResult = compareDirectories(
+        testDir.baselineDir,
+        testDir.candidateDir,
+        testDir.outputDir,
+      );
 
       expect(result.exitCode).toBe(1);
       expect(result.totalImages).toBe(1);
@@ -57,9 +63,13 @@ describe('visual-differ', () => {
     });
 
     it('should return exit code 0 with only new candidate files', () => {
-      writeFileSync(join(candidateDir, 'new.png'), RED_PNG);
+      testDir.writeCandidate('new.png', 'red');
 
-      const result: CompareResult = compareDirectories(baselineDir, candidateDir, outputDir);
+      const result: CompareResult = compareDirectories(
+        testDir.baselineDir,
+        testDir.candidateDir,
+        testDir.outputDir,
+      );
 
       expect(result.exitCode).toBe(0);
       expect(result.totalImages).toBe(1);
@@ -67,33 +77,37 @@ describe('visual-differ', () => {
     });
 
     it('should generate diff images for changed files', () => {
-      writeFileSync(join(baselineDir, 'changed.png'), RED_PNG);
-      writeFileSync(join(candidateDir, 'changed.png'), BLUE_PNG);
+      testDir.writeBaseline('changed.png', 'red');
+      testDir.writeCandidate('changed.png', 'blue');
 
-      compareDirectories(baselineDir, candidateDir, outputDir);
+      compareDirectories(testDir.baselineDir, testDir.candidateDir, testDir.outputDir);
 
-      expect(existsSync(join(outputDir, 'changed-diff.png'))).toBe(true);
+      expect(existsSync(join(testDir.outputDir, 'changed-diff.png'))).toBe(true);
     });
 
     it('should generate index.html report', () => {
-      writeFileSync(join(baselineDir, 'image1.png'), RED_PNG);
-      writeFileSync(join(candidateDir, 'image1.png'), RED_PNG);
+      testDir.writeBaseline('image1.png', 'red');
+      testDir.writeCandidate('image1.png', 'red');
 
-      compareDirectories(baselineDir, candidateDir, outputDir);
+      compareDirectories(testDir.baselineDir, testDir.candidateDir, testDir.outputDir);
 
-      expect(existsSync(join(outputDir, 'index.html'))).toBe(true);
+      expect(existsSync(join(testDir.outputDir, 'index.html'))).toBe(true);
     });
 
     it('should handle multiple images correctly', () => {
-      writeFileSync(join(baselineDir, 'same.png'), RED_PNG);
-      writeFileSync(join(baselineDir, 'different.png'), RED_PNG);
-      writeFileSync(join(baselineDir, 'deleted.png'), RED_PNG);
+      testDir.writeBaseline('same.png', 'red');
+      testDir.writeBaseline('different.png', 'red');
+      testDir.writeBaseline('deleted.png', 'red');
 
-      writeFileSync(join(candidateDir, 'same.png'), RED_PNG);
-      writeFileSync(join(candidateDir, 'different.png'), BLUE_PNG);
-      writeFileSync(join(candidateDir, 'new.png'), RED_PNG);
+      testDir.writeCandidate('same.png', 'red');
+      testDir.writeCandidate('different.png', 'blue');
+      testDir.writeCandidate('new.png', 'red');
 
-      const result: CompareResult = compareDirectories(baselineDir, candidateDir, outputDir);
+      const result: CompareResult = compareDirectories(
+        testDir.baselineDir,
+        testDir.candidateDir,
+        testDir.outputDir,
+      );
 
       expect(result.exitCode).toBe(1);
       expect(result.totalImages).toBe(4);
@@ -104,22 +118,30 @@ describe('visual-differ', () => {
     });
 
     it('should throw error if baseline directory does not exist', () => {
-      const nonExistent = join(testDir, 'does-not-exist');
+      const nonExistent = join(testDir.root, 'does-not-exist');
 
-      expect(() => compareDirectories(nonExistent, candidateDir, outputDir)).toThrow();
+      expect(() =>
+        compareDirectories(nonExistent, testDir.candidateDir, testDir.outputDir),
+      ).toThrow();
     });
 
     it('should throw error if candidate directory does not exist', () => {
-      const nonExistent = join(testDir, 'does-not-exist');
+      const nonExistent = join(testDir.root, 'does-not-exist');
 
-      expect(() => compareDirectories(baselineDir, nonExistent, outputDir)).toThrow();
+      expect(() =>
+        compareDirectories(testDir.baselineDir, nonExistent, testDir.outputDir),
+      ).toThrow();
     });
 
     it('should provide summary information in result', () => {
-      writeFileSync(join(baselineDir, 'image1.png'), RED_PNG);
-      writeFileSync(join(candidateDir, 'image1.png'), BLUE_PNG);
+      testDir.writeBaseline('image1.png', 'red');
+      testDir.writeCandidate('image1.png', 'blue');
 
-      const result: CompareResult = compareDirectories(baselineDir, candidateDir, outputDir);
+      const result: CompareResult = compareDirectories(
+        testDir.baselineDir,
+        testDir.candidateDir,
+        testDir.outputDir,
+      );
 
       expect(result).toHaveProperty('exitCode');
       expect(result).toHaveProperty('totalImages');
@@ -130,12 +152,16 @@ describe('visual-differ', () => {
     });
 
     it('should handle dimension mismatches gracefully', () => {
-      writeFileSync(join(baselineDir, 'mismatch.png'), RED_PNG); // 1x1
-      writeFileSync(join(candidateDir, 'mismatch.png'), LARGE_RED_PNG); // 2x2
-      writeFileSync(join(baselineDir, 'normal.png'), RED_PNG);
-      writeFileSync(join(candidateDir, 'normal.png'), RED_PNG);
+      testDir.writeBaseline('mismatch.png', 'red'); // 1x1
+      testDir.writeCandidate('mismatch.png', 'largeRed'); // 2x2
+      testDir.writeBaseline('normal.png', 'red');
+      testDir.writeCandidate('normal.png', 'red');
 
-      const result: CompareResult = compareDirectories(baselineDir, candidateDir, outputDir);
+      const result: CompareResult = compareDirectories(
+        testDir.baselineDir,
+        testDir.candidateDir,
+        testDir.outputDir,
+      );
 
       expect(result.exitCode).toBe(1);
       expect(result.totalImages).toBe(2);
@@ -144,19 +170,21 @@ describe('visual-differ', () => {
     });
 
     it('should throw error for invalid PNG files', () => {
-      writeFileSync(join(baselineDir, 'corrupt.png'), Buffer.from('not a png'));
-      writeFileSync(join(candidateDir, 'corrupt.png'), RED_PNG);
+      writeFileSync(join(testDir.baselineDir, 'corrupt.png'), Buffer.from('not a png'));
+      testDir.writeCandidate('corrupt.png', 'red');
 
-      expect(() => compareDirectories(baselineDir, candidateDir, outputDir)).toThrow();
+      expect(() =>
+        compareDirectories(testDir.baselineDir, testDir.candidateDir, testDir.outputDir),
+      ).toThrow();
     });
 
     it('should show dimension mismatch info in report', () => {
-      writeFileSync(join(baselineDir, 'mismatch.png'), RED_PNG); // 1x1
-      writeFileSync(join(candidateDir, 'mismatch.png'), LARGE_RED_PNG); // 2x2
+      testDir.writeBaseline('mismatch.png', 'red'); // 1x1
+      testDir.writeCandidate('mismatch.png', 'largeRed'); // 2x2
 
-      compareDirectories(baselineDir, candidateDir, outputDir);
+      compareDirectories(testDir.baselineDir, testDir.candidateDir, testDir.outputDir);
 
-      const html = readFileSync(join(outputDir, 'index.html'), 'utf-8');
+      const html = readFileSync(join(testDir.outputDir, 'index.html'), 'utf-8');
       expect(html).toContain('Dimension mismatch');
       expect(html).toContain('1x1');
       expect(html).toContain('2x2');

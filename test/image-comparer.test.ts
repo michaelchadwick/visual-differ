@@ -1,38 +1,23 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
+import { existsSync } from 'fs';
 import { join } from 'path';
-import { PngFilePair } from '../lib/png-file-pair.js';
+import { TestDirectory } from './helpers/test-utils.js';
 import { compareImages, type ComparisonResult } from '../lib/image-comparer.js';
-import { RED_PNG, BLUE_PNG } from './fixtures/png-fixtures.js';
 
 describe('image-comparer', () => {
-  const testDir = join(process.cwd(), 'test-fixtures-comparer');
-  const outputDir = join(testDir, 'output');
+  const testDir = new TestDirectory(join(process.cwd(), 'test-fixtures-comparer'));
 
   beforeEach(() => {
-    rmSync(testDir, { recursive: true, force: true });
-    mkdirSync(testDir, { recursive: true });
-    mkdirSync(outputDir, { recursive: true });
+    testDir.setup();
   });
 
   afterEach(() => {
-    rmSync(testDir, { recursive: true, force: true });
+    testDir.cleanup();
   });
 
   describe('compareImages', () => {
     it('should detect identical images', () => {
-      const baselinePath = join(testDir, 'image.png');
-      const candidatePath = join(testDir, 'image2.png');
-
-      writeFileSync(baselinePath, RED_PNG);
-      writeFileSync(candidatePath, RED_PNG);
-
-      const pair = new PngFilePair(
-        'image.png',
-        { name: 'image.png', path: baselinePath },
-        { name: 'image.png', path: candidatePath },
-        outputDir,
-      );
+      const pair = testDir.createPngFilePair('image.png', 'red', 'red');
 
       const result: ComparisonResult = compareImages(pair);
 
@@ -44,18 +29,7 @@ describe('image-comparer', () => {
     });
 
     it('should detect different images', () => {
-      const baselinePath = join(testDir, 'red.png');
-      const candidatePath = join(testDir, 'blue.png');
-
-      writeFileSync(baselinePath, RED_PNG);
-      writeFileSync(candidatePath, BLUE_PNG);
-
-      const pair = new PngFilePair(
-        'test.png',
-        { name: 'test.png', path: baselinePath },
-        { name: 'test.png', path: candidatePath },
-        outputDir,
-      );
+      const pair = testDir.createPngFilePair('test.png', 'red', 'blue');
 
       const result: ComparisonResult = compareImages(pair);
 
@@ -68,18 +42,7 @@ describe('image-comparer', () => {
     });
 
     it('should calculate correct diff percentage', () => {
-      const baselinePath = join(testDir, 'red.png');
-      const candidatePath = join(testDir, 'blue.png');
-
-      writeFileSync(baselinePath, RED_PNG);
-      writeFileSync(candidatePath, BLUE_PNG);
-
-      const pair = new PngFilePair(
-        'test.png',
-        { name: 'test.png', path: baselinePath },
-        { name: 'test.png', path: candidatePath },
-        outputDir,
-      );
+      const pair = testDir.createPngFilePair('test.png', 'red', 'blue');
 
       const result: ComparisonResult = compareImages(pair);
 

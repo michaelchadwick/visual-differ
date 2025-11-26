@@ -1,36 +1,21 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
+import { TestDirectory } from './helpers/test-utils.js';
 import { PngFilePair } from '../lib/png-file-pair.js';
-import { RED_PNG, LARGE_RED_PNG } from './fixtures/png-fixtures.js';
 
 describe('PngFilePair', () => {
-  const testDir = join(process.cwd(), 'test-fixtures-png-pair');
-  const outputDir = join(testDir, 'output');
+  const testDir = new TestDirectory(join(process.cwd(), 'test-fixtures-png-pair'));
 
   beforeEach(() => {
-    rmSync(testDir, { recursive: true, force: true });
-    mkdirSync(testDir, { recursive: true });
-    mkdirSync(outputDir, { recursive: true });
+    testDir.setup();
   });
 
   afterEach(() => {
-    rmSync(testDir, { recursive: true, force: true });
+    testDir.cleanup();
   });
 
   it('should load matched PNG files successfully', () => {
-    const baselinePath = join(testDir, 'image.png');
-    const candidatePath = join(testDir, 'image2.png');
-
-    writeFileSync(baselinePath, RED_PNG);
-    writeFileSync(candidatePath, RED_PNG);
-
-    const pair = new PngFilePair(
-      'image.png',
-      { name: 'image.png', path: baselinePath },
-      { name: 'image.png', path: candidatePath },
-      outputDir,
-    );
+    const pair = testDir.createPngFilePair('image.png', 'red', 'red');
 
     expect(pair.name).toBe('image.png');
     expect(pair.width).toBe(1);
@@ -41,18 +26,7 @@ describe('PngFilePair', () => {
   });
 
   it('should detect dimension mismatch without throwing', () => {
-    const baselinePath = join(testDir, 'small.png');
-    const candidatePath = join(testDir, 'large.png');
-
-    writeFileSync(baselinePath, RED_PNG); // 1x1
-    writeFileSync(candidatePath, LARGE_RED_PNG); // 2x2
-
-    const pair = new PngFilePair(
-      'test.png',
-      { name: 'test.png', path: baselinePath },
-      { name: 'test.png', path: candidatePath },
-      outputDir,
-    );
+    const pair = testDir.createPngFilePair('test.png', 'red', 'largeRed');
 
     expect(pair.hasDimensionMismatch).toBe(true);
     expect(pair.dimensionMismatch).toEqual({
@@ -64,35 +38,33 @@ describe('PngFilePair', () => {
   });
 
   it('should throw error if baseline file cannot be read', () => {
-    const baselinePath = join(testDir, 'missing.png');
-    const candidatePath = join(testDir, 'exists.png');
-
-    writeFileSync(candidatePath, RED_PNG);
+    // Create a file so candidate exists
+    testDir.createPngFilePair('exists.png', 'red', 'red');
+    const missingPath = join(testDir.baselineDir, 'missing.png');
 
     expect(
       () =>
         new PngFilePair(
           'test.png',
-          { name: 'test.png', path: baselinePath },
-          { name: 'test.png', path: candidatePath },
-          outputDir,
+          { name: 'test.png', path: missingPath },
+          { name: 'exists.png', path: join(testDir.candidateDir, 'exists.png') },
+          testDir.outputDir,
         ),
     ).toThrow();
   });
 
   it('should throw error if candidate file cannot be read', () => {
-    const baselinePath = join(testDir, 'exists.png');
-    const candidatePath = join(testDir, 'missing.png');
-
-    writeFileSync(baselinePath, RED_PNG);
+    // Create a file so baseline exists
+    testDir.createPngFilePair('exists.png', 'red', 'red');
+    const missingPath = join(testDir.candidateDir, 'missing.png');
 
     expect(
       () =>
         new PngFilePair(
           'test.png',
-          { name: 'test.png', path: baselinePath },
-          { name: 'test.png', path: candidatePath },
-          outputDir,
+          { name: 'exists.png', path: join(testDir.baselineDir, 'exists.png') },
+          { name: 'test.png', path: missingPath },
+          testDir.outputDir,
         ),
     ).toThrow();
   });
