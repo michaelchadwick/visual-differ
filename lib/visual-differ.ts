@@ -3,9 +3,10 @@ import { readFileSync, writeFileSync } from 'fs';
 import { PNG } from 'pngjs';
 import { scanAndMatchFiles } from './file-scanner.js';
 import { PngFilePair, DimensionMismatchError } from './png-file-pair.js';
-import { compareImages, type ComparisonResult } from './image-comparer.js';
+import { compareImages } from './image-comparer.js';
 import { calculateExitCode } from './exit-code-calculator.js';
 import { generateReport } from './report-generator.js';
+import type { ComparisonResult } from './image-comparer.js';
 
 /**
  * Result of comparing two directories of screenshots

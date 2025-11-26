@@ -12,15 +12,23 @@ export interface ScannedFile {
 }
 
 /**
+ * Represents a matched pair of files found in both directories
+ */
+export interface MatchedFilePair {
+  /** The name of the matched file */
+  name: string;
+  /** The full path to the baseline file */
+  baselinePath: string;
+  /** The full path to the candidate file */
+  candidatePath: string;
+}
+
+/**
  * Result of matching files between baseline and candidate directories
  */
 export interface FileMatchResult {
   /** Files that exist in both baseline and candidate directories */
-  matched: Array<{
-    name: string;
-    baselinePath: string;
-    candidatePath: string;
-  }>;
+  matched: MatchedFilePair[];
   /** Files that only exist in the baseline directory */
   baselineOnly: ScannedFile[];
   /** Files that only exist in the candidate directory */
@@ -85,7 +93,7 @@ export function scanAndMatchFiles(baselineDir: string, candidateDir: string): Fi
   const baselineMap = new Map(baselineFiles.map((f) => [f.name, f.path]));
   const candidateMap = new Map(candidateFiles.map((f) => [f.name, f.path]));
 
-  const matched: FileMatchResult['matched'] = [];
+  const matched: MatchedFilePair[] = [];
   const baselineOnly: ScannedFile[] = [];
   const candidateOnly: ScannedFile[] = [];
 
