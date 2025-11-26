@@ -18,7 +18,7 @@ npx visual-differ <baseline-dir> <candidate-dir> <output-dir>
 
 ### Output
 
-- **HTML Report** at `output-dir/report.html` - Visual comparison with side-by-side images and diffs
+- **HTML Report** at `output-dir/index.html` - Visual comparison with side-by-side images and diffs
 - **Diff Images** at `output-dir/*.png` - Visual diff overlays for changed images
 
 ### Exit Codes
