@@ -22,6 +22,7 @@ jobs:
           rm pnpm-lock.yaml
           pnpm install --fix-lockfile
           pnpm dedupe
+          pnpm format
       - name: Create Pull Request
         id: cpr
         uses: peter-evans/create-pull-request@v7
