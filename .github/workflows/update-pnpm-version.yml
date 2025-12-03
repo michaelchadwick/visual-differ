@@ -4,10 +4,6 @@ on:
     - cron: '0 23 * * 2' # Weekly on Tuesday afternoons (UTC)
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   update-pnpm:
     runs-on: ubuntu-latest
@@ -42,4 +38,4 @@ jobs:
         if: steps.cpr.outputs.pull-request-operation == 'created'
         run: gh pr merge --merge --auto ${{ steps.cpr.outputs.pull-request-number }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT }}
