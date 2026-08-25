@@ -143,6 +143,23 @@ describe('report-generator', () => {
 
       expect(html.toLowerCase()).toMatch(/pass|✓|✔/);
     });
+
+    it('should display added candidate screenshots as reviewable lightbox images', () => {
+      const comparisonResults: ComparisonResult[] = [];
+      const baselineOnly: ScannedFile[] = [];
+      const candidateOnly: ScannedFile[] = [
+        { name: 'new-screen.png', path: '/candidate/new-screen.png' },
+      ];
+
+      generateReport(comparisonResults, baselineOnly, candidateOnly, testDir.outputDir);
+
+      const html = readFileSync(join(testDir.outputDir, 'index.html'), 'utf-8');
+
+      expect(html).toContain('<h2>Added in Candidate (1)</h2>');
+      expect(html).toContain('images/new/new-screen.png');
+      expect(html).toContain('alt="New candidate screenshot for new-screen.png"');
+      expect(html).toContain('class="lightbox-trigger"');
+    });
   });
 
   describe('lightbox', () => {

@@ -107,6 +107,10 @@ describe('End-to-End Integration', () => {
     expect(html).toContain('images/changed-diff.png');
     expect(html).toContain('images/changed-candidate.png');
     expect(html).not.toContain(testDir.outputDir); // Should not have absolute paths
+
+    // Verify added screenshot was copied into images/new/ and referenced for review
+    expect(existsSync(join(testDir.imagesDir, 'new', 'added.png'))).toBe(true);
+    expect(html).toContain('images/new/added.png');
   });
 
   it('should generate passing report when no differences exist', () => {
@@ -123,6 +127,10 @@ describe('End-to-End Integration', () => {
     const html = readFileSync(join(testDir.outputDir, 'index.html'), 'utf-8');
     expect(html).toContain('PASSED');
     expect(html).toContain('✅');
+
+    // Added screenshot is still reviewable in a passing report
+    expect(existsSync(join(testDir.imagesDir, 'new', 'new-feature.png'))).toBe(true);
+    expect(html).toContain('images/new/new-feature.png');
   });
 
   it('should handle empty directories gracefully', () => {
