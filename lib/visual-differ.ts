@@ -6,7 +6,7 @@ import { compareImages } from './image-comparer.js';
 import { calculateExitCode } from './exit-code-calculator.js';
 import { generateReport } from './report-generator.js';
 import { generateMarkdownReport } from './markdown-report-generator.js';
-import { IMAGES_DIR } from './constants.js';
+import { IMAGES_DIR, NEW_IMAGES_DIR } from './constants.js';
 import type { ComparisonResult } from './image-comparer.js';
 
 /**
@@ -101,6 +101,16 @@ export function compareDirectories(
     // No format issues - do normal comparison
     return compareImages(pngPair, threshold);
   });
+
+  // Copy candidate-only (added) screenshots into images/new/ so the HTML report
+  // can display them for review. They keep their original file names.
+  if (fileMatches.candidateOnly.length > 0) {
+    const newImagesDir = join(imagesDir, NEW_IMAGES_DIR);
+    mkdirSync(newImagesDir, { recursive: true });
+    for (const file of fileMatches.candidateOnly) {
+      copyFileSync(file.path, join(newImagesDir, file.name));
+    }
+  }
 
   // Calculate exit code
   const exitCode = calculateExitCode(comparisonResults, fileMatches.baselineOnly);

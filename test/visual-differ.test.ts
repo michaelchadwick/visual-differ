@@ -74,6 +74,9 @@ describe('visual-differ', () => {
       expect(result.exitCode).toBe(0);
       expect(result.totalImages).toBe(1);
       expect(result.addedFiles).toBe(1);
+
+      // Added screenshot is copied into images/new/ for report display
+      expect(existsSync(join(testDir.imagesDir, 'new', 'new.png'))).toBe(true);
     });
 
     it('should generate diff images for changed files', () => {

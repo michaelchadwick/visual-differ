@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { join, basename, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import Handlebars from 'handlebars';
-import { IMAGES_DIR, REPORT_FILENAME } from './constants.js';
+import { IMAGES_DIR, NEW_IMAGES_DIR, REPORT_FILENAME } from './constants.js';
 import type { ComparisonResult } from './image-comparer.js';
 import type { ScannedFile } from './file-scanner.js';
 
@@ -76,7 +76,10 @@ function generateHTML(
       name: result.name,
     })),
     baselineOnly: baselineOnly.map((file) => ({ name: file.name })),
-    candidateOnly: candidateOnly.map((file) => ({ name: file.name })),
+    candidateOnly: candidateOnly.map((file) => ({
+      name: file.name,
+      image: `${IMAGES_DIR}/${NEW_IMAGES_DIR}/${file.name}`,
+    })),
     hasRemovedOrAdded: baselineOnly.length > 0 || candidateOnly.length > 0,
   };
 

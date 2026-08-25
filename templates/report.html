@@ -266,28 +266,24 @@
         {{else}}
         <p><strong>Difference:</strong> {{diffPercentage}}%</p>
         {{/if}}
-        <div class="diff-images">
+        <div class="diff-images" data-lightbox-group="diff">
           <button type="button" class="lightbox-trigger">
             <img src="{{baselineImage}}" alt="Baseline screenshot for {{name}}" />
           </button>
-          {{#unless dimensionMismatch}}
-          {{#unless unsupportedBitDepth}}
+          {{#unless dimensionMismatch}} {{#unless unsupportedBitDepth}}
           <button type="button" class="lightbox-trigger">
             <img
               src="{{diffImage}}"
               alt="Visual difference highlighting changed pixels in {{name}}"
             />
           </button>
-          {{/unless}}
-          {{/unless}}
+          {{/unless}} {{/unless}}
           <button type="button" class="lightbox-trigger">
             <img src="{{candidateImage}}" alt="Candidate screenshot for {{name}}" />
           </button>
         </div>
       </div>
-      {{/each}} {{/if}} {{#if hasRemovedOrAdded}}
-      <h2>Missing or New Files</h2>
-      {{#if baselineOnly.length}}
+      {{/each}} {{/if}} {{#if hasRemovedOrAdded}} {{#if baselineOnly.length}}
       <details>
         <summary>Removed from Candidate ({{baselineOnly.length}})</summary>
         <ul>
@@ -297,15 +293,17 @@
         </ul>
       </details>
       {{/if}} {{#if candidateOnly.length}}
-      <details>
-        <summary>Added in Candidate ({{candidateOnly.length}})</summary>
-        <ul>
-          {{#each candidateOnly}}
-          <li>{{name}}</li>
-          {{/each}}
-        </ul>
-      </details>
-      {{/if}} {{/if}} {{#if withoutDifferences.length}}
+      <h2>Added in Candidate ({{candidateOnly.length}})</h2>
+      {{#each candidateOnly}}
+      <div>
+        <h3>{{name}}</h3>
+        <div class="diff-images" data-lightbox-group="added">
+          <button type="button" class="lightbox-trigger">
+            <img src="{{image}}" alt="New candidate screenshot for {{name}}" />
+          </button>
+        </div>
+      </div>
+      {{/each}} {{/if}} {{/if}} {{#if withoutDifferences.length}}
       <details>
         <summary>Identical Images ({{withoutDifferences.length}})</summary>
         <ul>
@@ -418,10 +416,17 @@
         const prevBtn = lightbox.querySelector('.lightbox-prev');
         const nextBtn = lightbox.querySelector('.lightbox-next');
 
-        // 2D grid: each row is a diff group, columns are images within it
-        const grid = [...document.querySelectorAll('.diff-images')].map((group) => [
-          ...group.querySelectorAll('.lightbox-trigger'),
-        ]);
+        // 2D grid: each row is a group of related images, columns are images within it.
+        // Diff rows come first and are the only rows that participate in row counting and
+        // Up/Down cycling; added-image rows can still be opened but don't have peers to cycle through.
+        const toGroups = (groups) =>
+          [...document.querySelectorAll(groups)].map((group) => [
+            ...group.querySelectorAll('.lightbox-trigger'),
+          ]);
+        const diffGroups = toGroups('.diff-images[data-lightbox-group="diff"]');
+        const addedGroups = toGroups('.diff-images[data-lightbox-group="added"]');
+        const grid = [...diffGroups, ...addedGroups];
+        const diffRowCount = diffGroups.length;
 
         if (grid.length === 0) return;
 
@@ -429,7 +434,8 @@
         let col = 0;
 
         const wrapCol = (r, c) => ((c % grid[r].length) + grid[r].length) % grid[r].length;
-        const wrapRow = (r) => ((r % grid.length) + grid.length) % grid.length;
+        const wrapRow = (r) => ((r % diffRowCount) + diffRowCount) % diffRowCount;
+        const isDiffRow = (r) => r < diffRowCount;
 
         const show = (r, c) => {
           row = r;
@@ -440,7 +446,9 @@
           image.alt = img.alt;
           caption.textContent = img.alt;
           imageCounter.textContent = `Image ${col + 1}\u2009/\u2009${grid[row].length}`;
-          rowCounter.textContent = `Row ${row + 1}\u2009/\u2009${grid.length}`;
+          rowCounter.textContent = isDiffRow(row)
+            ? `Row ${row + 1}\u2009/\u2009${diffRowCount}`
+            : '';
           link.href = img.src;
         };
 
@@ -470,10 +478,11 @@
               show(row, wrapCol(row, col + 1));
               break;
             case 'ArrowUp': {
+              if (!isDiffRow(row)) break;
               event.preventDefault();
               const upRow = wrapRow(row - 1);
               show(upRow, Math.min(col, grid[upRow].length - 1));
-              if (upRow === grid.length - 1) {
+              if (upRow === diffRowCount - 1) {
                 if (window.tempModal) {
                   window.tempModal._destroyModal();
                 }
@@ -482,6 +491,7 @@
               break;
             }
             case 'ArrowDown': {
+              if (!isDiffRow(row)) break;
               event.preventDefault();
               const downRow = wrapRow(row + 1);
               show(downRow, Math.min(col, grid[downRow].length - 1));

@@ -175,3 +175,58 @@ test('shows unsupported bit depth warning with only baseline/candidate images', 
     card.getByAltText('Candidate screenshot for gradient-mixed-depth.png'),
   ).toBeVisible();
 });
+
+test('shows added candidate image as reviewable lightbox image', async ({ page }) => {
+  await page.goto(reportUrl);
+
+  await expect(
+    page.getByRole('heading', { name: 'Added in Candidate (1)', exact: true }),
+  ).toBeVisible();
+
+  const card = page.locator('div', {
+    has: page.locator('h3', { hasText: 'happy-chihuahua.png' }),
+  });
+
+  await expect(card.getByAltText('New candidate screenshot for happy-chihuahua.png')).toBeVisible();
+  await expect(card.locator('.lightbox-trigger')).toHaveCount(1);
+  await expect(card.locator('img')).toHaveAttribute('src', 'images/new/happy-chihuahua.png');
+});
+
+test('opens added candidate image in lightbox with single-image counter', async ({ page }) => {
+  await page.goto(reportUrl);
+
+  const trigger = page
+    .locator('.diff-images[data-lightbox-group="added"] .lightbox-trigger')
+    .first();
+  await trigger.click();
+  await expect(page.locator('dialog#lightbox')).toBeVisible();
+
+  await expect(page.locator('.lightbox-image-counter').first()).toHaveText('Image 1 / 1');
+  await expect(page.locator('.lightbox-row-counter').first()).toHaveText('');
+});
+
+test('does not cycle rows from added candidate image on up/down keyboard input', async ({
+  page,
+}) => {
+  await page.goto(reportUrl);
+
+  const trigger = page
+    .locator('.diff-images[data-lightbox-group="added"] .lightbox-trigger')
+    .first();
+  await trigger.click();
+  await expect(page.locator('dialog#lightbox')).toBeVisible();
+
+  const imageCounter = page.locator('.lightbox-image-counter').first();
+  const filename = page.locator('.lightbox-image-filename').first();
+
+  await expect(imageCounter).toHaveText('Image 1 / 1');
+  await expect(filename).toHaveText('happy-chihuahua.png');
+
+  await page.keyboard.press('ArrowDown');
+  await expect(imageCounter).toHaveText('Image 1 / 1');
+  await expect(filename).toHaveText('happy-chihuahua.png');
+
+  await page.keyboard.press('ArrowUp');
+  await expect(imageCounter).toHaveText('Image 1 / 1');
+  await expect(filename).toHaveText('happy-chihuahua.png');
+});

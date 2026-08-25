@@ -23,6 +23,11 @@ export const DIFF_SUFFIX = '-diff.png';
 export const IMAGES_DIR = 'images';
 
 /**
+ * Subdirectory within IMAGES_DIR where candidate-only (added) screenshots are copied
+ */
+export const NEW_IMAGES_DIR = 'new';
+
+/**
  * Name of the generated HTML report file
  */
 export const REPORT_FILENAME = 'index.html';
